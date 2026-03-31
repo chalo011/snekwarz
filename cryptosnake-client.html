@@ -383,18 +383,22 @@ function handleServerMessage(msg, resolveConnect) {
       MODE = 'live';
       // Centre camera on player
       const me = snakes[myId];
-      if (me && me.segs) { cameraX = me.segs[0]; cameraY = me.segs[1]; }
+      if (me && me.segs) { cameraX = me.segs[0]; cameraY = me.segs[1]; livePredX=me.segs[0]; livePredY=me.segs[1]; livePredAngle=0; }
       if (resolveConnect) resolveConnect(true);
       break;
 
     case 'state':
-      // Full state delta from server
       snakes = {};
       msg.snakes.forEach(s => { snakes[s.id] = s; });
-      coins = {};
-      msg.coins.forEach(c => { coins[c.id] = c; });
+      if (msg.coins) { coins = {}; msg.coins.forEach(c => { coins[c.id] = c; }); }
       if (msg.sol) { solTokenPos = { x: msg.sol.x, y: msg.sol.y }; solTimerDisplay = msg.sol.t; }
       else { solTokenPos = null; }
+      // Sync local prediction to server head position
+      const meSnap=snakes[myId];
+      if(meSnap && meSnap.segs && meSnap.segs.length>=2){
+        livePredX+=(meSnap.segs[0]-livePredX)*0.5;
+        livePredY+=(meSnap.segs[1]-livePredY)*0.5;
+      }
       break;
 
     case 'snake_spawn':
@@ -562,19 +566,21 @@ function gameLoop() {
 }
 
 // ── LIVE MODE UPDATE ──
+let liveAngle=0, livePredX=0, livePredY=0, livePredAngle=0;
 function updateLiveMode() {
-  // Send input to server at ~20fps
-  if (frameCount % 3 === 0 && ws && ws.readyState === WebSocket.OPEN) {
+  // Send input every frame for responsiveness
+  if (ws && ws.readyState === WebSocket.OPEN) {
     const cx=canvas.width/2,cy2=canvas.height/2;
-    let angle = null;
+    let angle = liveAngle;
     const dx=mouseX-cx,dy=mouseY-cy2;
     if(Math.abs(dx)>5||Math.abs(dy)>5) angle=Math.atan2(dy,dx);
     if(keys['ArrowUp']||keys['w'])    angle=-Math.PI/2;
     if(keys['ArrowDown']||keys['s'])  angle=Math.PI/2;
     if(keys['ArrowLeft']||keys['a'])  angle=Math.PI;
     if(keys['ArrowRight']||keys['d']) angle=0;
+    liveAngle=angle;
     const boost=keys[' ']||keys['Shift']||boosting;
-    ws.send(JSON.stringify({type:'input',angle,boost}));
+    if(frameCount%2===0) ws.send(JSON.stringify({type:'input',angle,boost}));
   }
 
   // Boost bar from local estimate
@@ -583,12 +589,18 @@ function updateLiveMode() {
   else boostEnergy=Math.min(1,boostEnergy+0.003);
   document.getElementById('boost-fill').style.width=(boostEnergy*100)+'%';
 
-  // Camera: follow our snake from server state
+  // Local prediction: smoothly move player head between server updates
   const me=snakes[myId];
   if(me && me.segs && me.segs.length>=2){
-    const hx=me.segs[0],hy=me.segs[1];
-    cameraX+=(hx-cameraX)*0.12;
-    cameraY+=(hy-cameraY)*0.12;
+    const spd=isBoost?SPEED_BOOST:SPEED_BASE;
+    let da=liveAngle-livePredAngle;
+    while(da>Math.PI)da-=Math.PI*2;while(da<-Math.PI)da+=Math.PI*2;
+    livePredAngle+=Math.max(-0.13,Math.min(0.13,da));
+    livePredX=wrapW(livePredX+Math.cos(livePredAngle)*spd);
+    livePredY=wrapW(livePredY+Math.sin(livePredAngle)*spd);
+    // Snap prediction to server head position each server update (handled in state handler)
+    cameraX+=(livePredX-cameraX)*0.2;
+    cameraY+=(livePredY-cameraY)*0.2;
     myScore=me.score; myLength=me.length; myAlive=me.alive;
   }
 

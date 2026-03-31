@@ -291,9 +291,9 @@ function updateBotAI(s) {
 // SERIALIZATION
 // ─────────────────────────────────────────
 function serializeSnake(s) {
-  // Compact: every other segment to save bandwidth
   const segs = [];
-  for (let i = 0; i < s.segments.length; i += 2) {
+  const step = Math.max(2, Math.floor(s.segments.length / 60));
+  for (let i = 0; i < s.segments.length && segs.length < 120; i += step) {
     segs.push(Math.round(s.segments[i].x), Math.round(s.segments[i].y));
   }
   return { id:s.id, name:s.name, color:s.color, score:s.score,
@@ -306,8 +306,9 @@ function serializeCoin(c) {
 
 function broadcastState() {
   const snakeArr = Object.values(snakes).map(serializeSnake);
-  const coinArr  = Object.values(coins).map(serializeCoin);
   const sol      = solToken ? { x:Math.round(solToken.x), y:Math.round(solToken.y), t:Math.floor(solToken.timer/TICK_RATE) } : null;
+  // Send coins only every 10 ticks — they barely move
+  const coinArr  = tick % 10 === 0 ? Object.values(coins).map(serializeCoin) : undefined;
   const msg = JSON.stringify({ type:'state', tick, snakes:snakeArr, coins:coinArr, sol });
   for (const [,ws] of clients) {
     if (ws.readyState === WebSocket.OPEN) ws.send(msg);
