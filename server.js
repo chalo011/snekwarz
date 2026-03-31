@@ -13,11 +13,11 @@ const PORT = process.env.PORT || 3001;
 // CONSTANTS (must match client)
 // ─────────────────────────────────────────
 const WORLD        = 3000;
-const TICK_RATE    = 20;          // ticks per second
+const TICK_RATE    = 30;          // ticks per second
 const TICK_MS      = 1000 / TICK_RATE;
 const MAX_PLAYERS  = 20;
-const SPEED_BASE   = 2.8;
-const SPEED_BOOST  = 5.5;
+const SPEED_BASE   = 5.6;        // 5.6 * 30tps = 168px/sec, matches client 60fps feel
+const SPEED_BOOST  = 11.0;
 const COIN_TARGET  = 280;
 const SOL_DURATION = 20;          // seconds
 
