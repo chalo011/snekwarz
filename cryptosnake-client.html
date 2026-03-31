@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>SnekWarz</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
@@ -55,6 +57,18 @@ body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monosp
 
 /* PING */
 #ping-display{position:fixed;bottom:16px;right:12px;font-size:11px;color:var(--dim);z-index:10;font-family:'Orbitron',monospace;}
+
+/* MOBILE */
+@media(max-width:600px){
+  #leaderboard{width:110px;right:6px;top:50px;padding:6px;}
+  .lb-entry{font-size:10px;}#lb-title{font-size:9px;}
+  #minimap{width:80px;height:80px;right:6px;bottom:50px;}
+  #hud-logo{font-size:13px;}
+  .hud-box{font-size:11px;padding:3px 8px;}
+  #boost-track{width:100px;}
+  #ping-display{display:none;}
+  #boost-wrap{bottom:8px;}
+}
 
 /* POPUPS */
 .collect-popup{position:fixed;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;pointer-events:none;z-index:30;animation:float-up 1s ease forwards;}
@@ -936,6 +950,19 @@ window.addEventListener('mouseup',e=>{if(e.button===0)boosting=false;});
 window.addEventListener('keydown',e=>{keys[e.key]=true;if(e.key===' ')e.preventDefault();});
 window.addEventListener('keyup',e=>{keys[e.key]=false;});
 window.addEventListener('resize',()=>{if(canvas){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}});
+
+// Touch input
+window.addEventListener('touchstart',e=>{e.preventDefault();
+  if(e.touches.length>=2){boosting=true;}
+  const t=e.touches[0];mouseX=t.clientX;mouseY=t.clientY;
+},{passive:false});
+window.addEventListener('touchmove',e=>{e.preventDefault();
+  const t=e.touches[0];mouseX=t.clientX;mouseY=t.clientY;
+  if(e.touches.length>=2) boosting=true;
+},{passive:false});
+window.addEventListener('touchend',e=>{e.preventDefault();
+  if(e.touches.length<2) boosting=false;
+},{passive:false});
 
 // ══════════════════════════════════════════════
 // UTILS
