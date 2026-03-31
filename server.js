@@ -328,7 +328,7 @@ function broadcast(obj) {
 const wss = new WebSocketServer({ port: PORT, maxPayload: 1024 }); // 1 KB max message
 const clients = new Map(); // snakeId → ws
 
-const RATE_LIMIT_MS  = 40;   // minimum ms between messages (~25/sec max)
+const RATE_LIMIT_MS  = 25;   // minimum ms between messages (~40/sec max)
 const HEX_COLOR_RE   = /^#[0-9a-fA-F]{6}$/;
 const SAFE_NAME_RE   = /^[A-Z0-9_. ]{1,12}$/;
 
