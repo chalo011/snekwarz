@@ -199,11 +199,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <input id="name-input" maxlength="12" placeholder="ANON" spellcheck="false">
     </div>
 
-    <div id="server-row">
-      <input id="server-input" placeholder="ws://localhost:3001  (leave blank for bots)" spellcheck="false">
-      <button style="padding:8px 14px;background:transparent;border:1px solid var(--dim);color:var(--dim);font-family:'Orbitron',monospace;font-size:12px;cursor:pointer;border-radius:5px;" onclick="testConnection()">TEST</button>
-    </div>
-    <div id="server-status">leave blank to play with bots only</div>
+    <input id="server-input" style="display:none">
+    <div id="server-status" style="display:none"></div>
 
     <button id="play-btn" onclick="startGame()">▶ PLAY</button>
     <div class="start-hi">ALL TIME HIGH: <span id="start-hi-score">0 pts</span></div>
