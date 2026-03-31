@@ -383,8 +383,8 @@ function handleServerMessage(msg, resolveConnect) {
       // Sync local prediction to server head position
       const meSnap=snakes[myId];
       if(meSnap && meSnap.segs && meSnap.segs.length>=2){
-        livePredX+=(meSnap.segs[0]-livePredX)*0.5;
-        livePredY+=(meSnap.segs[1]-livePredY)*0.5;
+        livePredX+=(meSnap.segs[0]-livePredX)*0.1;
+        livePredY+=(meSnap.segs[1]-livePredY)*0.1;
       }
       break;
 
@@ -586,8 +586,8 @@ function updateLiveMode() {
     livePredX=wrapW(livePredX+Math.cos(livePredAngle)*spd);
     livePredY=wrapW(livePredY+Math.sin(livePredAngle)*spd);
     // Snap prediction to server head position each server update (handled in state handler)
-    cameraX+=(livePredX-cameraX)*0.2;
-    cameraY+=(livePredY-cameraY)*0.2;
+    cameraX+=(livePredX-cameraX)*0.1;
+    cameraY+=(livePredY-cameraY)*0.1;
     myScore=me.score; myLength=me.length; myAlive=me.alive;
   }
 
