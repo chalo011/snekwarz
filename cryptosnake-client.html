@@ -51,7 +51,8 @@ body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monosp
 #boost-wrap{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;z-index:10;pointer-events:none;}
 #boost-label{font-size:10px;letter-spacing:2px;color:var(--dim);}
 #boost-track{width:140px;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;border:1px solid var(--border);}
-#boost-fill{height:100%;width:100%;background:linear-gradient(90deg,#00ff87,#60efff);border-radius:3px;transition:width .1s;}
+#boost-fill{height:100%;width:100%;background:linear-gradient(90deg,#00ff87,#60efff);border-radius:3px;transition:background .2s;}
+#boost-fill.active{background:linear-gradient(90deg,#f7931a,#ff4466);}
 
 /* PING */
 #ping-display{position:fixed;bottom:16px;right:12px;font-size:11px;color:var(--dim);z-index:10;font-family:'Orbitron',monospace;}
@@ -142,7 +143,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <div id="minimap"><canvas id="minimap-canvas"></canvas></div>
 
 <div id="boost-wrap">
-  <div id="boost-label">BOOST</div>
+  <div id="boost-label">BOOST [SHIFT]</div>
   <div id="boost-track"><div id="boost-fill"></div></div>
 </div>
 <div id="ping-display"></div>
@@ -285,7 +286,7 @@ let canvas, ctx, mmCanvas, mmCtx;
 let snakes = {}, coins = {}, solTokenPos = null, solTimerDisplay = 0;
 let player = null;  // local player snake (bot mode) or local input state (live mode)
 let particles = [], popups = [];
-let keys = {}, mouseX = 0, mouseY = 0, boosting = false;
+let keys = {}, mouseX = 0, mouseY = 0, boosting = false, boostOn = false;
 let boostEnergy = 1.0;
 let gameRunning = false, animId = null;
 let frameCount = 0, cameraX = 0, cameraY = 0;
@@ -557,14 +558,12 @@ function updateLiveMode() {
     if(keys['ArrowDown']||keys['s'])  angle=Math.PI/2;
     if(keys['ArrowLeft']||keys['a'])  angle=Math.PI;
     if(keys['ArrowRight']||keys['d']) angle=0;
-    const boost=keys[' ']||keys['Shift']||boosting;
-    ws.send(JSON.stringify({type:'input',angle,boost}));
+    ws.send(JSON.stringify({type:'input',angle,boost:boostOn}));
   }
 
-  const isBoost=keys[' ']||keys['Shift']||boosting;
-  if(isBoost) boostEnergy=Math.max(0,boostEnergy-0.008);
-  else boostEnergy=Math.min(1,boostEnergy+0.003);
-  document.getElementById('boost-fill').style.width=(boostEnergy*100)+'%';
+  const fill=document.getElementById('boost-fill');
+  fill.style.width='100%';
+  if(boostOn){fill.classList.add('active');}else{fill.classList.remove('active');}
 
   const me=snakes[myId];
   if(me && me.segs && me.segs.length>=2){
@@ -594,11 +593,10 @@ function updateBotMode() {
   if(keys['ArrowLeft']||keys['a'])  me.targetAngle=Math.PI;
   if(keys['ArrowRight']||keys['d']) me.targetAngle=0;
 
-  const isBoost=keys[' ']||keys['Shift']||boosting;
-  me.boost=isBoost && boostEnergy>0;
-  if(me.boost) boostEnergy=Math.max(0,boostEnergy-0.008);
-  else         boostEnergy=Math.min(1,boostEnergy+0.003);
-  document.getElementById('boost-fill').style.width=(boostEnergy*100)+'%';
+  me.boost=boostOn;
+  const fill2=document.getElementById('boost-fill');
+  fill2.style.width='100%';
+  if(boostOn){fill2.classList.add('active');}else{fill2.classList.remove('active');}
 
   // Move all snakes
   for(const s of Object.values(snakes)){
@@ -905,7 +903,7 @@ function showDeathScreen(){
 
 function respawnOrRestart(){
   document.getElementById('death-screen').classList.remove('show');
-  myAlive=true;myScore=0;mySolCount=0;myLength=8;boostEnergy=1.0;frameCount=0;
+  myAlive=true;myScore=0;mySolCount=0;myLength=8;boostEnergy=1.0;boostOn=false;frameCount=0;
   if(MODE==='live'&&ws&&ws.readyState===WebSocket.OPEN){
     ws.send(JSON.stringify({type:'respawn'}));
     gameRunning=true;if(animId)cancelAnimationFrame(animId);gameLoop();
@@ -927,9 +925,11 @@ function goToMenu(){
 // INPUT
 // ══════════════════════════════════════════════
 window.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;});
-window.addEventListener('mousedown',e=>{if(e.button===0)boosting=true;});
-window.addEventListener('mouseup',e=>{if(e.button===0)boosting=false;});
-window.addEventListener('keydown',e=>{keys[e.key]=true;if(e.key===' ')e.preventDefault();});
+window.addEventListener('mousedown',e=>{if(e.button===0){boostOn=!boostOn;}});
+window.addEventListener('keydown',e=>{
+  keys[e.key]=true;
+  if(e.key===' '||e.key==='Shift'){boostOn=!boostOn;e.preventDefault();}
+});
 window.addEventListener('keyup',e=>{keys[e.key]=false;});
 window.addEventListener('resize',()=>{if(canvas){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}});
 
